@@ -8,7 +8,7 @@ export enum Collections {
 export type room = {
   _id: ObjectId;
   _partitionKey: string;
-  topic?: string;
+  topic: string;
   userId: ObjectId;
 };
 
@@ -26,8 +26,8 @@ export const roomSchema = {
 export type estimate = {
   _id: ObjectId;
   _partitionKey: string;
-  estimate?: number;
-  name?: string;
+  estimate: number;
+  name: string;
   roomId?: room;
   userId: ObjectId;
 };

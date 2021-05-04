@@ -2,21 +2,19 @@ import { useInsertRoom, useRooms } from "../../mongodb/setup";
 import React, { useState } from "react";
 import { room } from "../../mongodb/types";
 import { useHistory } from "react-router";
-import "./Home.css";
+import "./Rooms.css";
 
-export default function Home() {
+export default function Rooms() {
   const rooms = useRooms();
 
   return (
-    <main className="main">
-      <h1>Rooms</h1>
+    <main>
       <section>
+        <h1>Rooms</h1>
         <CreateRoom />
-        <div className="room-row">
-          <h5>Name</h5>
-          <h5>ID</h5>
-          <h5>Actions</h5>
-        </div>
+      </section>
+
+      <section>
         {rooms?.map((room) => (
           <RoomRow room={room} key={room._id.toHexString()} />
         ))}
@@ -57,13 +55,13 @@ function RoomRow(props: { room: room }): JSX.Element {
   return (
     <div className="room-row">
       <p>{room.topic}</p>
-      <p>{room._id.toHexString()}</p>
-      <button
-        className="btn primary"
-        onClick={() => history.push("/room/" + room._id)}
+      <a
+        className="btn"
+        href={"/estimates/" + room._id.toHexString()}
+        onClick={() => history.push("/estimates/" + room._id.toHexString())}
       >
-        Enter
-      </button>
+        Enter room
+      </a>
     </div>
   );
 }

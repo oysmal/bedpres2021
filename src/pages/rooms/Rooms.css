@@ -1,0 +1,23 @@
+.room-row {
+    margin-bottom: 16px;
+    padding: 16px 24px;
+    width: 100%;
+    text-align: left;
+    border-radius: 8px;
+    box-shadow: 2px 5px 10px 2px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.create-room {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.create-room > input {
+    margin-bottom: 8px;
+}
+

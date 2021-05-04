@@ -1,15 +1,15 @@
 import React from "react";
 import "./App.css";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import Home from "./pages/home/Home";
-import Room from "./pages/room/Room";
+import Rooms from "./pages/rooms/Rooms";
+import Estimates from "./pages/estimates/Estimates";
 
 function App() {
   return (
     <BrowserRouter>
       <Switch>
-        <Route exact={true} path="/room/:id" component={Room} />
-        <Route exact={true} path="/" component={Home} />
+        <Route exact={true} path="/estimates/:id" component={Estimates} />
+        <Route exact={true} path="/" component={Rooms} />
       </Switch>
     </BrowserRouter>
   );

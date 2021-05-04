@@ -1,9 +1,0 @@
-.room-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 100px;
-    margin-bottom: 8px;
-    padding: 8px 0px;
-    border-bottom: 2px solid #f0f0f0;
-    width: 100%;
-}
-

@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { App, Credentials, User } from "realm-web";
 import { Collections, estimate, room } from "./types";
-import { ObjectId } from "bson";
+import { ObjectID, ObjectId } from "bson";
+
+const PUBLIC_PARTITION = "PUBLIC";
 
 const app = new App({ id: "bedpres2021-bmkhz" });
 const credentials = Credentials.anonymous();
@@ -41,16 +43,20 @@ export function useCollection(collectionName: Collections) {
 
 export function useRooms() {
   const [rooms, setRooms] = useState<room[]>([]);
+  const shouldRefresh = useRefresh(Collections.Rooms, {});
   const roomsCollection = useCollection(Collections.Rooms);
 
   useEffect(() => {
     roomsCollection?.find({}).then(setRooms);
-  }, [roomsCollection]);
+  }, [roomsCollection, shouldRefresh]);
 
   return rooms;
 }
 
 export function useRoom(id: string) {
+  const shouldRefresh = useRefresh(Collections.Estimates, {
+    roomId: new ObjectId(id),
+  });
   const [roomAndEstimates, setRoomAndEstimates] = useState<{
     room: room | null;
     estimates: estimate[];
@@ -64,21 +70,39 @@ export function useRoom(id: string) {
         setRoomAndEstimates({ room, estimates });
       });
     });
-  }, [roomsCollection, estimatesCollection, id]);
+  }, [roomsCollection, estimatesCollection, id, shouldRefresh]);
 
   return roomAndEstimates;
 }
 
-export function useInsertEstimate() {
+export function useUpsertEstimate() {
+  const [estimateId, setEstimateId] = useState<ObjectID | null>(null);
   const collection = useCollection(Collections.Estimates);
-  return (room: room, name: string, estimate: number) =>
-    collection?.insertOne({
-      roomId: room._id,
-      estimate,
-      userId: new ObjectId(app?.currentUser?.id),
-      name,
-      _partitionKey: "PUBLIC",
-    });
+
+  return (room: room, name: string, estimate: number) => {
+    if (estimateId) {
+      return collection?.updateOne(
+        { _id: estimateId },
+        {
+          roomId: room._id,
+          estimate,
+          userId: new ObjectId(app?.currentUser?.id),
+          name,
+          _partitionKey: PUBLIC_PARTITION,
+        }
+      );
+    } else {
+      return collection
+        ?.insertOne({
+          roomId: room._id,
+          estimate,
+          userId: new ObjectId(app?.currentUser?.id),
+          name,
+          _partitionKey: PUBLIC_PARTITION,
+        })
+        .then((data) => setEstimateId(data.insertedId));
+    }
+  };
 }
 
 export function useInsertRoom() {
@@ -87,6 +111,44 @@ export function useInsertRoom() {
     collection?.insertOne({
       topic,
       userId: new ObjectId(app?.currentUser?.id),
-      _partitionKey: "PUBLIC",
+      _partitionKey: PUBLIC_PARTITION,
     } as Partial<room>);
+}
+
+export function useRefresh(
+  collectionToWatch: Collections,
+  filters: Record<string, any>
+) {
+  const collection = useCollection(collectionToWatch);
+  const [renderIteration, rerender] = useReducer(
+    (state: number) => state + 1,
+    0
+  );
+
+  useEffect(() => {
+    const watcher = async () => {
+      if (!collection) return;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _ of collection.watch(filters)) {
+        rerender();
+      }
+    };
+
+    watcher().then();
+  }, [collection, filters]);
+
+  return renderIteration;
+}
+
+export function useEstimatesBackend(id: string) {
+  const { estimates, room } = useRoom(id);
+  const upsertEstimate = useUpsertEstimate();
+  return useMemo(
+    () => ({
+      estimates,
+      room,
+      upsertEstimate,
+    }),
+    [estimates, upsertEstimate, room]
+  );
 }
