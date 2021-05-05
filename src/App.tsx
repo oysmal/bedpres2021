@@ -6,7 +6,7 @@ function App() {
   return (
     <BrowserRouter>
       <Switch>
-        <Route path="/">Welcome to the workshop!</Route>
+        <Route path="/"><h1>Welcome to the workshop!</h1></Route>
       </Switch>
     </BrowserRouter>
   );
