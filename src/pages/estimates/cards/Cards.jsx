@@ -2,12 +2,7 @@ import "./Cards.css";
 
 const cards = [1, 3, 5, 8, 13, 20, 40, 60];
 
-type CardsProps = {
-  onSelectCard: (value: number) => void;
-  selectedCard: number;
-};
-
-export default function Cards(props: CardsProps) {
+export default function Cards(props) {
   const { onSelectCard, selectedCard } = props;
 
   return (

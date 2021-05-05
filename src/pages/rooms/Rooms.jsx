@@ -1,21 +1,32 @@
-import { useInsertRoom, useRooms } from "../../mongodb/setup";
-import React, { useState } from "react";
-import { room } from "../../mongodb/types";
+import { getRooms, insertRoom } from "../../mongodb/setup";
+import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import "./Rooms.css";
 
 export default function Rooms() {
-  const rooms = useRooms();
+  const [rooms, setRooms] = useState([]);
+
+  useEffect(() => {
+    getRooms().then(setRooms);
+  }, []);
+
+  const onCreateRoom = (name) => {
+    if (name) {
+      insertRoom(name).then(() => {
+        getRooms().then(setRooms);
+      });
+    }
+  };
 
   return (
     <main>
       <section>
         <h1>Rooms</h1>
-        <CreateRoom />
+        <CreateRoom onCreateRoom={onCreateRoom} />
       </section>
 
       <section>
-        {rooms?.map((room) => (
+        {rooms.map((room) => (
           <RoomRow room={room} key={room._id.toHexString()} />
         ))}
       </section>
@@ -23,15 +34,8 @@ export default function Rooms() {
   );
 }
 
-function CreateRoom() {
+function CreateRoom(props) {
   const [name, setName] = useState("");
-  const insertRoom = useInsertRoom();
-
-  const onCreateRoom = () => {
-    if (name) {
-      insertRoom(name);
-    }
-  };
 
   return (
     <div className="create-room">
@@ -41,14 +45,14 @@ function CreateRoom() {
         onChange={(e) => setName(e.target.value)}
         value={name}
       />
-      <button className="btn primary" onClick={onCreateRoom}>
+      <button className="btn primary" onClick={() => props.onCreateRoom(name)}>
         Create Room
       </button>
     </div>
   );
 }
 
-function RoomRow(props: { room: room }): JSX.Element {
+function RoomRow(props) {
   const { room } = props;
   const history = useHistory();
 

@@ -1,18 +1,18 @@
 import { useParams } from "react-router";
-import { useEstimatesBackend } from "../../mongodb/setup";
+import { useEstimateHooks } from "../../mongodb/setup";
 import { useState } from "react";
 import Cards from "./cards/Cards";
 import "./Estimates.css";
 
 export default function Estimates() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const [selectedCard, setSelectedCard] = useState(-1);
   const [name, setName] = useState("");
-  const { room, estimates, upsertEstimate } = useEstimatesBackend(id);
+  const { room, estimates, createOrUpdateEstimate } = useEstimateHooks(id);
 
-  const onSelectCard = (card: number) => {
+  const onSelectCard = (card) => {
     setSelectedCard(card);
-    if (room) upsertEstimate(room, name, card);
+    if (room) createOrUpdateEstimate(room, name, card);
   };
 
   return (
@@ -45,7 +45,7 @@ export default function Estimates() {
   );
 }
 
-function Estimate(props: { name: string; estimate: number }) {
+function Estimate(props) {
   const { name, estimate } = props;
 
   return (
