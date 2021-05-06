@@ -34,24 +34,12 @@ export default function Estimates() {
       <section className="estimates">
         <h2>Estimates</h2>
         {estimates.map((estimate) => (
-          <Estimate
-            key={estimate._id.toHexString()}
-            name={estimate.name}
-            estimate={estimate.estimate}
-          />
+          <div className="estimate" key={estimate._id.id}>
+            <p>{estimate.name}</p>
+            <p>{estimate.estimate}</p>
+          </div>
         ))}
       </section>
     </main>
-  );
-}
-
-function Estimate(props) {
-  const { name, estimate } = props;
-
-  return (
-    <div className="estimate">
-      <p>{name}</p>
-      <p>{estimate}</p>
-    </div>
   );
 }
