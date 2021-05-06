@@ -8,9 +8,9 @@ const PUBLIC_PARTITION = "PUBLIC";
 const app = new App({ id: "bedpres2021-bmkhz" });
 const credentials = Credentials.anonymous();
 
-async function setup(): Promise<Realm.User | null> {
-  let user: User | null = null;
+let user: User | null = null;
 
+async function setup(): Promise<Realm.User | null> {
   try {
     user = await app.logIn(credentials);
   } catch (err) {
@@ -41,16 +41,50 @@ export function useCollection(collectionName: Collections) {
   );
 }
 
-export function useRooms() {
-  const [rooms, setRooms] = useState<room[]>([]);
-  const shouldRefresh = useRefresh(Collections.Rooms, {});
-  const roomsCollection = useCollection(Collections.Rooms);
+function getMongoClient() {
+  return app?.currentUser?.mongoClient("mongodb-atlas") ?? null;
+}
 
-  useEffect(() => {
-    roomsCollection?.find({}).then(setRooms);
-  }, [roomsCollection, shouldRefresh]);
+export function getRooms(): Promise<room[]> {
+  const mongo = getMongoClient();
+  if (mongo) {
+    return mongo
+      .db("bedpres2021")
+      .collection(Collections.Rooms.toString())
+      .find({}, { sort: { _id: -1 } });
+  } else {
+    return setup().then(() =>
+      getMongoClient()!
+        .db("bedpres2021")
+        .collection(Collections.Rooms.toString())
+        .find({})
+    );
+  }
+}
 
-  return rooms;
+export function insertRoom(topic: string) {
+  const mongo = getMongoClient();
+  if (mongo) {
+    return mongo
+      .db("bedpres2021")
+      .collection(Collections.Rooms.toString())
+      .insertOne({
+        topic,
+        userId: new ObjectId(app?.currentUser?.id),
+        _partitionKey: PUBLIC_PARTITION,
+      } as Partial<room>);
+  } else {
+    setup().then(() =>
+      getMongoClient()!
+        .db("bedpres2021")
+        .collection(Collections.Rooms.toString())
+        .insertOne({
+          topic,
+          userId: new ObjectId(app?.currentUser?.id),
+          _partitionKey: PUBLIC_PARTITION,
+        } as Partial<room>)
+    );
+  }
 }
 
 export function useRoom(id: string) {
@@ -105,16 +139,6 @@ export function useUpsertEstimate() {
   };
 }
 
-export function useInsertRoom() {
-  const collection = useCollection(Collections.Rooms);
-  return (topic: string) =>
-    collection?.insertOne({
-      topic,
-      userId: new ObjectId(app?.currentUser?.id),
-      _partitionKey: PUBLIC_PARTITION,
-    } as Partial<room>);
-}
-
 export function useRefresh(
   collectionToWatch: Collections,
   filters: Record<string, any>
@@ -140,15 +164,15 @@ export function useRefresh(
   return renderIteration;
 }
 
-export function useEstimatesBackend(id: string) {
+export function useEstimateHooks(id: string) {
   const { estimates, room } = useRoom(id);
-  const upsertEstimate = useUpsertEstimate();
+  const createOrUpdateEstimate = useUpsertEstimate();
   return useMemo(
     () => ({
       estimates,
       room,
-      upsertEstimate,
+      createOrUpdateEstimate,
     }),
-    [estimates, upsertEstimate, room]
+    [estimates, createOrUpdateEstimate, room]
   );
 }
